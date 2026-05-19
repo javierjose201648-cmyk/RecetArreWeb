@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\josej\\\\source\\\\repos\\\\RecetArreWeb\" -Recurse -File | Select-Object -First 50 | ForEach-Object { $_.FullName })",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\josej\\\\source\\\\repos\\\\RecetArreAPI2\" -Recurse -Force)",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(Out-String -Width 200)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\josej\\\\source\\\\repos\\\\RecetArreWeb\" -Recurse -Force)",
+      "Bash(Select-Object FullName)",
+      "PowerShell(head -50)"
+    ]
+  }
+}
