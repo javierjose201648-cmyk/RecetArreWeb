@@ -1,0 +1,79 @@
+@using RecetArreWeb.DTOs
+@inject RecetArreWeb.Services.IComentarioService ComentarioService
+@inject NavigationManager NavigationManager
+
+<div class="comentarios-list">
+    @if (isLoading)
+    {
+        <p>Cargando comentarios...</p>
+    }
+    else
+    {
+        if (comentarios?.Items?.Any() != true)
+        {
+            <p>No hay comentarios todavía.</p>
+        }
+        else
+        {
+            foreach (var c in comentarios.Items)
+            {
+                <ComentarioItem Comentario="c" OnReply="HandleReply" OnEdit="HandleEdit" OnDelete="HandleDelete" />
+            }
+        }
+
+        <div class="mt-3">
+            <button class="btn btn-secondary" @onclick="LoadPrevious" disabled="@(comentarios.Page <= 1)">Anterior</button>
+            <span class="mx-2">Página @comentarios.Page</span>
+            <button class="btn btn-secondary" @onclick="LoadNext" disabled="@(comentarios.Items.Count < comentarios.PageSize)">Siguiente</button>
+        </div>
+
+        <ComentarioEditor RecetaId="RecetaId" OnCreated="HandleCreated" />
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int RecetaId { get; set; }
+
+    private PaginatedComentariosDto? comentarios;
+    private bool isLoading = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadComments();
+    }
+
+    private async Task LoadComments(int page = 1)
+    {
+        isLoading = true;
+        comentarios = await ComentarioService.ObtenerPorReceta(RecetaId, page, 20);
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task LoadNext() => await LoadComments(comentarios.Page + 1);
+    private async Task LoadPrevious() => await LoadComments(comentarios.Page - 1);
+
+    private async Task HandleCreated(ComentarioDto created)
+    {
+        await LoadComments(1);
+    }
+
+    private Task HandleReply(int parentId)
+    {
+        // Scroll to editor and set parent id (left as TODO)
+        return Task.CompletedTask;
+    }
+
+    private Task HandleEdit(int id)
+    {
+        // open edit UI (left as TODO)
+        return Task.CompletedTask;
+    }
+
+    private async Task HandleDelete(int id)
+    {
+        var ok = await ComentarioService.Eliminar(id);
+        if (ok) await LoadComments(1);
+    }
+}

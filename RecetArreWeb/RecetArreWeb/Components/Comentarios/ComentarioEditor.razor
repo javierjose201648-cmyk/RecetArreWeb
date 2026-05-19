@@ -1,0 +1,32 @@
+@using RecetArreWeb.DTOs
+@inject RecetArreWeb.Services.IComentarioService ComentarioService
+
+<div class="comentario-editor mt-3">
+    <EditForm Model="model" OnValidSubmit="HandleValidSubmit">
+        <InputTextArea @bind-Value="model.Contenido" class="form-control" rows="4" />
+        <ValidationMessage For="() => model.Contenido" />
+        <div class="mt-2">
+            <button class="btn btn-primary" type="submit">Publicar</button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public int RecetaId { get; set; }
+
+    [Parameter]
+    public EventCallback<ComentarioDto> OnCreated { get; set; }
+
+    private ComentarioCreacionDto model = new();
+
+    private async Task HandleValidSubmit()
+    {
+        var created = await ComentarioService.Crear(RecetaId, model);
+        if (created != null)
+        {
+            model.Contenido = string.Empty;
+            await OnCreated.InvokeAsync(created);
+        }
+    }
+}

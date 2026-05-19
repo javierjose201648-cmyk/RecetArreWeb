@@ -1,0 +1,29 @@
+﻿@inherits LayoutComponentBase
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4 d-flex justify-content-between align-items-center">
+            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            <AuthorizeView>
+                <NotAuthorized>
+                    <div>
+                        <a class="btn btn-link p-0 me-2" href="/login">Login</a>
+                        <a class="btn btn-link p-0" href="/registro">Registro</a>
+                    </div>
+                </NotAuthorized>
+                <Authorized>
+                    <div class="text-muted small d-flex align-items-center">
+                        <span class="bi bi-person-circle me-2"></span> @context.User.Identity?.Name
+                    </div>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>

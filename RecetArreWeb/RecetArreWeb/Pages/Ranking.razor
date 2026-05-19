@@ -1,0 +1,118 @@
+@page "/ranking"
+@attribute [Authorize]
+@inject IRecetaService recetaService
+@inject IRatingService ratingService
+@inject NavigationManager navigation
+
+<PageTitle>Ranking</PageTitle>
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 text-brand mb-1">Ranking de Recetas</h1>
+                    <p class="text-muted mb-0">Recetas ordenadas por promedio de calificación</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        @if (ranking == null)
+        {
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-brand" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="text-muted mt-3">Cargando ranking...</p>
+            </div>
+        }
+        else if (!ranking.Any())
+        {
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <h5 class="alert-heading">No hay recetas</h5>
+                    <p class="mb-0">Aún no hay recetas disponibles para mostrar en el ranking.</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            @foreach (var item in ranking)
+            {
+                <div class="col-12 col-sm-6 col-lg-4 col-xl-3 mb-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title text-brand mb-0 me-2">@item.Receta.Titulo</h5>
+                                @if (item.Receta.EstaPublicado)
+                                {
+                                    <span class="badge bg-success">Publicado</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Borrador</span>
+                                }
+                            </div>
+
+                            <p class="card-text text-muted small flex-grow-1">
+                                @(string.IsNullOrEmpty(item.Receta.Descripcion) ? "Sin descripción" : (item.Receta.Descripcion.Length > 100 ? item.Receta.Descripcion[..100] + "..." : item.Receta.Descripcion))
+                            </p>
+
+                            <div class="mb-2">
+                                <div class="d-flex align-items-center gap-1 mb-1">
+                                    @for (int si = 1; si <= 5; si++)
+                                    {
+                                        var starClass = item.AverageRating >= si ? "bi-star-fill" : (item.AverageRating >= si - 0.5 ? "bi-star-half" : "bi-star");
+                                        <i class="bi @starClass text-warning"></i>
+                                    }
+                                </div>
+                                <strong>@(item.AverageRating > 0 ? item.AverageRating.ToString("0.0") : "Sin calif.")</strong>
+                                <span class="text-muted small">(@item.RatingsCount calificaciones)</span>
+                            </div>
+
+                            <div class="d-flex gap-2 mt-auto">
+                                <button class="btn btn-sm btn-brand flex-grow-1" @onclick="() => IrADetalle(item.Receta.Id)">Ver</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private List<RankingItem>? ranking;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var recetas = await recetaService.ObtenerTodas();
+
+        var tareas = recetas.Select(async r =>
+        {
+            var ratings = await ratingService.ObtenerPorReceta(r.Id);
+            var avg = ratings.Any() ? ratings.Average(x => x.Valor) : 0.0;
+            return new RankingItem
+            {
+                Receta = r,
+                AverageRating = avg,
+                RatingsCount = ratings.Count
+            };
+        });
+
+        var resultados = await Task.WhenAll(tareas);
+
+        ranking = resultados.OrderByDescending(x => x.AverageRating).ThenByDescending(x => x.RatingsCount).ToList();
+    }
+
+    private void IrADetalle(int id) => navigation.NavigateTo($"/recetas/{id}");
+
+    private class RankingItem
+    {
+        public RecetaDto Receta { get; set; } = default!;
+        public double AverageRating { get; set; }
+        public int RatingsCount { get; set; }
+    }
+}
